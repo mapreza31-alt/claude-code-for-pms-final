@@ -16,6 +16,10 @@ prompt library built from your own questions.
 
 ### 1.
 
+You've now read both piles. Where do they disagree? What's loud in the interviews but rare in the tickets, and what's all over the tickets that nobody brought up in the interviews?
+
 ### 2.
+
+If I'd only read the interviews, what would I have got wrong?
 
 ### 3.
