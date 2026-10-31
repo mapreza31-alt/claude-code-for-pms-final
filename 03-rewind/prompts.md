@@ -16,6 +16,40 @@ prompt library built from your own questions.
 
 ### 1.
 
+Summarize what the big takeaway is and cited sources used
+
 ### 2.
 
+Compare the support_tickets table on rook-database against the pings table. Do they agree with each other? When do the numbers actually move?
+
 ### 3.
+
+Provide a data visualizations, a summary , and reason why the pings stopped
+
+### 4.
+
+what is the main takeaway
+
+### 5.
+
+create a visual workflow along with now Callouts, pings, and filters relate.. helped me get a sense of the #s we are seeing
+
+### 6.
+
+Pick one responder from the pings table who went quiet. Show me every week since June: how many pings, and what they did with each. Use their name.
+
+### 7.
+
+why did you pick undertow?
+
+### 8.
+
+provide a visualization to tell a story about what happened from when  Undertow  received a ping until after
+
+### 9.
+
+provide a bottom line and next steps to provide to leadership
+
+### 10.
+
+is there anything else I might have missed
