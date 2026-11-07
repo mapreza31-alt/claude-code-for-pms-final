@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release 4.2 Report</title>
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --ink:#1c1b19; --muted:#6b675f; --line:#e2ddd3;
+  --accent:#c2410c; --accent-soft:#fde7d9;
+  --taken:#2f6f5e; --down:#b8a98a; --missed:#c2410c;
+  --code-bg:#1f1d1a; --code-ink:#f3eee4; --code-dim:#a39b8c;
+  --good:#2f6f5e; --warn:#b45309;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141311; --surface:#1d1c19; --ink:#efebe3; --muted:#a39d92; --line:#33302b;
+    --accent:#f97316; --accent-soft:#3a2416;
+    --taken:#5fb39b; --down:#8a7f6a; --missed:#f97316;
+    --code-bg:#0d0c0b; --code-ink:#f3eee4; --code-dim:#8f887a;
+    --good:#5fb39b; --warn:#f59e0b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141311; --surface:#1d1c19; --ink:#efebe3; --muted:#a39d92; --line:#33302b;
+  --accent:#f97316; --accent-soft:#3a2416;
+  --taken:#5fb39b; --down:#8a7f6a; --missed:#f97316;
+  --code-bg:#0d0c0b; --code-ink:#f3eee4; --code-dim:#8f887a;
+  --good:#5fb39b; --warn:#f59e0b;
+}
+*{box-sizing:border-box}
+html{scroll-snap-type:y proximity;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.slide{min-height:100vh;scroll-snap-align:start;padding:72px 24px;display:flex;align-items:center}
+.wrap{max-width:1080px;margin:0 auto;width:100%}
+.kicker{font:600 12px/1 ui-monospace,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+h1{font-size:clamp(34px,6vw,64px);line-height:1.05;margin:0 0 20px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,40px);line-height:1.15;margin:0 0 18px;letter-spacing:-.01em}
+h3{font-size:18px;margin:0 0 8px}
+p{margin:0 0 14px}
+.lede{font-size:clamp(18px,2.2vw,22px);color:var(--muted);max-width:760px}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+em.hl{font-style:normal;background:var(--accent-soft);color:var(--ink);padding:0 4px;border-radius:3px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.stat .n{font-size:clamp(30px,4vw,44px);font-weight:700;letter-spacing:-.02em;line-height:1}
+.stat .n small{font-size:.5em;color:var(--muted);font-weight:600}
+.stat .l{color:var(--muted);font-size:14px;margin-top:8px}
+.arrow{color:var(--accent)}
+/* nav */
+nav.dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:9px;z-index:10}
+nav.dots a{width:10px;height:10px;border-radius:50%;background:var(--line);display:block}
+nav.dots a.on{background:var(--accent)}
+.progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:11}
+@media (max-width:700px){nav.dots{display:none}.slide{padding:56px 16px}}
+/* prompt terminal */
+.term{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:16px 18px;font:14.5px/1.55 ui-monospace,Consolas,monospace;position:relative}
+.term .bar{display:flex;gap:6px;margin-bottom:12px;align-items:center}
+.term .bar i{width:10px;height:10px;border-radius:50%;background:#5a554c;display:block}
+.term .bar span{margin-left:8px;color:var(--code-dim);font-size:12px}
+.term .ps{color:#f97316}
+.term.empty{color:var(--code-dim)}
+/* module layout */
+.mod{display:grid;grid-template-columns:1fr 1.1fr;gap:28px;align-items:start}
+@media (max-width:860px){.mod{grid-template-columns:1fr}}
+.badge{display:inline-flex;align-items:center;gap:8px;font:600 13px/1 ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:12px}
+.badge b{background:var(--accent);color:#fff;border-radius:6px;padding:5px 8px}
+.src{font:12.5px/1.4 ui-monospace,Consolas,monospace;color:var(--muted);margin-top:10px}
+ul.tight{margin:0;padding-left:20px}ul.tight li{margin-bottom:6px}
+/* charts */
+svg text{fill:var(--muted);font:12px ui-sans-serif,system-ui,sans-serif}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+/* checklist */
+.check{display:flex;gap:12px;align-items:flex-start}
+.check .ic{flex:none;width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700}
+table.run{width:100%;border-collapse:collapse;font-size:14px}
+table.run th,table.run td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+table.run th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.ok{color:var(--good);font-weight:700}.flag{color:var(--accent);font-weight:700}
+.diff{font:13.5px/1.5 ui-monospace,Consolas,monospace;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.diff div{padding:6px 12px}
+.diff .del{background:rgba(194,65,12,.12);text-decoration:line-through;color:var(--muted)}
+.diff .add{background:rgba(47,111,94,.14)}
+.frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.frame iframe{width:100%;height:760px;border:0;display:block;background:#fff}
+.frame .cap{padding:10px 14px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+a{color:var(--accent)}
+.pill{display:inline-block;font-size:12px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted);margin:0 6px 6px 0}
+.theme-btn{position:fixed;top:12px;right:14px;z-index:12;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:99px;padding:6px 12px;font-size:13px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<button class="theme-btn" id="themeBtn" aria-label="Toggle light and dark">◐ Theme</button>
+<nav class="dots" id="dots" aria-label="Sections"></nav>
+
+<!-- 1. Title -->
+<section class="slide" id="s-title">
+  <div class="wrap">
+    <div class="kicker">Rook Dispatch · Final report · Claude Code for PMs</div>
+    <h1>Release 4.2 didn't make responders stop answering.<br><span class="arrow">It stopped asking them.</span></h1>
+    <p class="lede">Six modules, one question: what went wrong after 12 August? This report shows the answer, the prompts that found it, the fix I prototyped, and the skill that catches the next one before it ships.</p>
+    <p class="small muted" style="margin-top:28px">Maria Apreza, Dispatch PM · 7 Nov 2026 · Data: rook.pings, support tickets, September interviews, <code>dispatch-routing</code> code, rook-wiki · Use ↓ / ↑ or scroll</p>
+  </div>
+</section>
+
+<!-- 2. Bottom line -->
+<section class="slide" id="s-bottom">
+  <div class="wrap">
+    <div class="kicker">The bottom line</div>
+    <h2>What happened, in plain words</h2>
+    <div class="grid g2" style="margin-bottom:22px">
+      <div class="card">
+        <ol class="tight" style="padding-left:22px">
+          <li>4.2 cut the <b>ping wait from 90 to 60 seconds</b>.</li>
+          <li>More pings ran out before anyone answered. Those count as <b>missed</b>.</li>
+          <li>The routing code <b>scores a miss exactly like a "no"</b> (−0.12) and never lets the score recover.</li>
+          <li>A few early misses pushed <b>four responders</b> down the order. With no pings, they couldn't earn their way back.</li>
+          <li>Their work moved to three others. <b>Unfilled callouts doubled.</b> Handlers saw "my phone never goes off."</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>What it wasn't</h3>
+        <p class="small"><b>Not the August dip.</b> The week of 3 Aug was the best week on record (77.9% taken). Misses jumped on release day.</p>
+        <p class="small"><b>Not people saying no.</b> Turn-downs actually <i>fell</i>, from 21% to 18%. The whole drop is misses.</p>
+        <p class="small" style="margin:0"><b>Not a reason to revert 4.2.</b> Wide-area responders asked for the ranking change. The fault is how a miss is scored.</p>
+      </div>
+    </div>
+    <div class="grid g4">
+      <div class="card stat"><div class="n">2.3% <span class="arrow">→</span> 18%</div><div class="l">pings missed, before vs after 4.2</div></div>
+      <div class="card stat"><div class="n">5.5% <span class="arrow">→</span> 11.1%</div><div class="l">callouts nobody filled</div></div>
+      <div class="card stat"><div class="n">75–85% <span class="arrow">→</span> 4–16%</div><div class="l">the four's share of first place on home-area callouts</div></div>
+      <div class="card stat"><div class="n">−0.12 <small>= −0.12</small></div><div class="l">score cost of a miss vs a turn-down in <code>history.py</code></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Chart -->
+<section class="slide" id="s-chart">
+  <div class="wrap">
+    <div class="kicker">The evidence · rook.pings, 29 Jun – 6 Sep</div>
+    <h2>Misses appear the week 4.2 ships, and never go back</h2>
+    <p class="lede" style="margin-bottom:18px">Every ping ends one of three ways. Before 4.2, almost none ran out. After, about one in six did.</p>
+    <div class="card">
+      <svg id="weekly" viewBox="0 0 980 360" role="img" aria-label="Weekly ping outcomes, taken, turned down and missed, by week"></svg>
+      <div class="legend">
+        <span style="--c:var(--taken)">Taken</span>
+        <span style="--c:var(--down)">Turned down</span>
+        <span style="--c:var(--missed)">Missed (ping wait ran out)</span>
+      </div>
+      <p class="src">Source: SELECT outcome share by week FROM rook.pings. Week of 10 Aug includes release day (12 Aug). Not yet checked against Ravi's official weekly report.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Mechanism -->
+<section class="slide" id="s-loop">
+  <div class="wrap">
+    <div class="kicker">Why four people disappeared</div>
+    <h2>A loop with no way out</h2>
+    <p class="lede" style="margin-bottom:18px">The only way to raise your score is to take a ping. A low score means you don't get pings. So once you fall, you stay down.</p>
+    <div class="card">
+      <svg id="loop" viewBox="0 0 980 380" role="img" aria-label="Feedback loop: ping, 60 second wait, missed, minus 0.12, lower in order, fewer pings, no chance to earn plus 0.08">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+        </defs>
+        <g id="loopNodes"></g>
+      </svg>
+      <p class="src">Source: <code>config.py</code> (DECLINE_PENALTY = 0.12, ACCEPTANCE_CREDIT = 0.08; 4.2 weights proximity 0.60, acceptance 0.25), <code>history.py</code> (no recovery over time, no reset). Since 19 Aug the four still miss 75% of pings even when first in line (others: 16%), so the cause of those misses is still open with Wen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Module slides injected by JS -->
+<div id="modules"></div>
+
+<!-- Fix: prototype -->
+<section class="slide" id="s-fix">
+  <div class="wrap">
+    <div class="kicker">The fix · Module 5 prototype</div>
+    <h2>Not one number. Something a handler and a responder can see.</h2>
+    <p class="lede" style="margin-bottom:18px">Helen asked to see the fix from the side of the person it happens to. Click through all five steps: a quiet week, a ping, an unfilled callout, three days later, and a check of the three possible causes.</p>
+    <div class="frame">
+      <iframe src="05-super-speed/prototype.html" title="Quiet Responders clickable prototype" loading="lazy"></iframe>
+      <div class="cap"><span>Anonymized version (Responder A–D) until Helen decides on cover names under Security Policy 4.1. Some numbers are example data.</span><a href="05-super-speed/prototype.html" target="_blank" rel="noopener">Open full screen ↗</a></div>
+    </div>
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card"><h3>Handler sees</h3><p class="small" style="margin:0">Where each responder sits in the order and why. "No answer in 60 s. Counted as a miss, not a no." A flag when someone goes quiet, before anyone files a ticket.</p></div>
+      <div class="card"><h3>Responder sees</h3><p class="small" style="margin:0">"Missing it doesn't count against you like a no." Then "You're back in rotation." A "Tap if you got this" check that doesn't touch their score.</p></div>
+      <div class="card"><h3>4.3 underneath</h3><p class="small" style="margin:0">Score a miss separately, with recovery over a few days. A score floor. An unfilled-callout alert. Reset the four, but only once we know why they miss.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Skill -->
+<section class="slide" id="s-skill">
+  <div class="wrap">
+    <div class="kicker">Keeping it from happening again · Module 6</div>
+    <h2>The <code>review-checklist</code> skill</h2>
+    <p class="lede" style="margin-bottom:18px">4.2 didn't fail because someone wrote bad code. It failed because questions had no owner and nobody was measuring misses. Wen's 2019 note asking whether the score should ease back was never answered. Marcus's 14 Aug question was never answered. The skill checks every brief for exactly these gaps before it goes anywhere.</p>
+    <div class="grid g2">
+      <div class="card">
+        <div class="grid" style="gap:14px">
+          <div class="check"><div class="ic">1</div><div><b>Names who owns it.</b><div class="small muted">A named person, not "TBD", not someone who has left. <i>4.2: Wen's question had no owner.</i></div></div></div>
+          <div class="check"><div class="ic">2</div><div><b>Says how we'll know it worked.</b><div class="small muted">A metric with a baseline and target. <i>4.2: nobody watched the miss rate after cutting the wait.</i></div></div></div>
+          <div class="check"><div class="ic">3</div><div><b>Keeps the same scope start to finish.</b><div class="small muted">Flags items that creep in or quietly drop out.</div></div></div>
+          <div class="check"><div class="ic">4</div><div><b>Explains the problem before the fix.</b><div class="small muted">What's wrong, for whom, and how we know.</div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Scheduled run, 13 Oct 2026, 03:00 UTC</h3>
+        <div style="overflow-x:auto"><table class="run">
+          <tr><th>Brief</th><th>Owner</th><th>Measure</th><th>Scope</th><th>Problem first</th></tr>
+          <tr><td>Bulk callout</td><td class="flag">✕</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+          <tr><td>Override audit log</td><td class="ok">✓</td><td class="flag">✕</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+          <tr><td>Requisition approvals</td><td class="ok">✓</td><td class="ok">✓</td><td class="flag">✕</td><td class="ok">✓</td></tr>
+          <tr><td>Handler phone app</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="flag">✕</td></tr>
+        </table></div>
+        <p class="small muted" style="margin-top:10px">4 briefs checked, 4 flagged, one gap each. It runs on a schedule, so nobody has to remember to ask.</p>
+        <p class="src">Source: 06-sidekicks/scheduled-run-output.txt</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h3>It worked on my own brief too</h3>
+      <p class="small muted">My first draft of the brief to Helen had two of the gaps the checklist catches: no named owner, and the fix came before the problem. Both are fixed in the current <code>05-super-speed/brief.md</code>:</p>
+      <div class="diff">
+        <div class="del">**From:** Dispatch PM</div>
+        <div class="add">**From:** Maria Apreza, Dispatch PM (owner of this brief)</div>
+        <div class="add">**The problem:** since 4.2 cut the ping wait to 60 seconds, four responders have barely been pinged… (moved to the top, before the fix)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Next -->
+<section class="slide" id="s-next">
+  <div class="wrap">
+    <div class="kicker">What's still open</div>
+    <h2>What I need, and from whom</h2>
+    <div class="grid g3">
+      <div class="card"><h3>Wen Li</h3><p class="small" style="margin:0">Confirm how the score works. Explain why the four miss 75% of pings even when first: slow answers, pings not reaching the phone, or wrong availability. When does the 60 s clock start?</p></div>
+      <div class="card"><h3>Ravi Menon</h3><p class="small" style="margin:0">Check these numbers against the official weekly report. Supply time-to-accept and coverage gap, which our data can't compute.</p></div>
+      <div class="card"><h3>Helen Achebe</h3><p class="small" style="margin:0">Three decisions: ship the package in 4.3 instead of the one-number patch; reset the four once the cause is known; can cover names appear in briefs?</p></div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h3>How we'll know it worked</h3>
+      <div class="grid g4" style="margin-top:8px">
+        <div class="stat"><div class="n" style="font-size:28px">18% → 2–3%</div><div class="l">missed pings</div></div>
+        <div class="stat"><div class="n" style="font-size:28px">11.1% → 5.5%</div><div class="l">unfilled callouts</div></div>
+        <div class="stat"><div class="n" style="font-size:28px">4–16% → 75%+</div><div class="l">the four first on home-area callouts</div></div>
+        <div class="stat"><div class="n" style="font-size:28px">pre-4.2</div><div class="l">"phone never goes off" ticket level</div></div>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:22px">Not yet known: why callouts per day fell (about 20 → 17), whether four Supply maintenance tickets are linked, and where Availability Confidence went. Rook Industries is a fictional company used for Product School's Claude Code for PMs course.</p>
+  </div>
+</section>
+
+<script>
+// ---------- Data ----------
+const WEEKS = [
+  ["29 Jun",76.7,21.5,1.7],["6 Jul",77.1,20.6,2.4],["13 Jul",76.4,20.1,3.4],["20 Jul",75.0,22.2,2.8],
+  ["27 Jul",77.6,20.0,2.4],["3 Aug",77.9,20.9,1.2],["10 Aug",54.2,24.3,21.5],["17 Aug",65.8,16.5,17.7],
+  ["24 Aug",66.7,18.5,14.8],["31 Aug",72.7,14.5,12.7]
+];
+
+const MODULES = [
+  { n:"01", name:"Origin Story", title:"The company's own sources don't agree with each other",
+    prompt:"What's contradictory or missing, not just in the company documents, but across Rook's wiki, its database, and the files in my repo?",
+    finding:"Before any analysis, the sources contradicted each other on things that matter for 4.2.",
+    bullets:[
+      "<b>Confidentiality:</b> policy says Rook never stores responder identity, yet cover names sit in the <code>responders</code> table.",
+      "<b>Availability Confidence</b> was committed to 4.2 but isn't in the release notes, and there's no trace of it anywhere.",
+      "<b>Priya's \"August dip\"</b> was never checked. The week of 3 Aug turned out to be the best on record.",
+      "<b>Marcus's 14 Aug question</b>, whether the ranking change was meant to hit people turning jobs down, was never answered."
+    ],
+    visual:"contradictions", src:"rook-wiki · rook-database · handoff-from-priya.docx" },
+  { n:"02", name:"Super Hearing", title:"Tickets and interviews told two different stories",
+    prompt:"You've now read both piles. Where do they disagree? What's loud in the interviews but rare in the tickets, and what's all over the tickets that nobody brought up in the interviews?",
+    finding:"The loudest ticket theme was quiet phones. But the responders hit hardest had no tickets at all. Their drop only showed up in the data and the interviews.",
+    bullets:[
+      "<b>Only in interviews:</b> one responder overloaded while another sat idle; handlers wanting to know when a callout is live.",
+      "<b>Only in tickets:</b> layout, profile and sign-in complaints that interviewees called fine.",
+      "Ticket 3043 (\"coat and one boot on\") is the same vanished-callout story Mr. Ambrose told in his interview."
+    ],
+    visual:"tickets", src:"rook.support_tickets (147, 29 Jun – 7 Sep) · September interviews" },
+  { n:"03", name:"Rewind", title:"The numbers move on release day",
+    prompt:"Compare the support_tickets table on rook-database against the pings table. Do they agree with each other? When do the numbers actually move?",
+    finding:"Tickets and pings agree on <i>when</i>: \"gone before I could answer\" starts 12 Aug, \"phone never goes off\" starts 17 Aug. Misses go from 2.3% to 18% of pings.",
+    bullets:[
+      "The gap before the next ping after a miss shrank from about 92 s to about 62 s, matching the new wait.",
+      "Pings per callout rose from 1.23 to 1.39; unfilled callouts rose from 5.5% to 11.1%.",
+      "They disagree on <i>who</i>: two of the hardest-hit responders have no tickets, while some areas with many tickets saw only small drops."
+    ],
+    visual:"timeline", src:"rook.pings · rook.support_tickets" },
+  { n:"04", name:"X-Ray Vision", title:"The code can't tell a miss from a no",
+    prompt:"how are the .py files connected, provide a workflow",
+    finding:"Following one callout through the files showed where the damage happens: <code>history.py</code> scores every miss as a turn-down, and only a take earns points back.",
+    bullets:[
+      "Miss: <b>−0.12</b>. Turn-down: <b>−0.12</b>. Take: <b>+0.08</b>. No recovery over time, no reset.",
+      "4.2 moved weights to proximity 0.60 and acceptance 0.25. That made the score count <i>less</i>, but the shorter wait still punished people who never said no.",
+      "Sending to the phone, finding who's free and travel time are empty placeholders in this copy. Nothing alerts anyone when a callout goes unfilled."
+    ],
+    visual:"pipeline", src:"00-rook/code/dispatch-routing/*.py" },
+  { n:"05", name:"Super Speed", title:"The fix, from the side of the person it happens to",
+    prompt:"Show me this happening to Meteor Mite specifically, using her name, the way Kip would see it.",
+    finding:"Kip handles one responder who went quiet and one who's overloaded, and sees two cards with nothing linking them. The prototype puts the console and the phone side by side and shows each step of what happened, in words a handler would use.",
+    bullets:[
+      "Built from one source: an anonymized copy for Helen (<code>prototype.html</code>) and a named copy for internal use only.",
+      "Paired with a one-page brief that leads with the user's view and ends with the questions Helen would ask.",
+      "Recommendation: hold the one-number patch and ship the full package in 4.3."
+    ],
+    visual:"proto", src:"05-super-speed/prototype.html · brief.md" },
+  { n:"06", name:"Sidekicks", title:"A skill that reviews every brief, on a schedule",
+    prompt:null,
+    finding:"I turned the lesson into a reusable skill: <code>review-checklist</code> checks any brief for a named owner, a success measure, consistent scope, and the problem stated before the fix.",
+    bullets:[
+      "A scheduled run checked four roadmap briefs and flagged one gap in each.",
+      "My own brief to Helen had two of these gaps (no named owner, fix before problem). Both are fixed in the current draft."
+    ],
+    visual:"skill", src:".claude/skills/review-checklist/SKILL.md · 06-sidekicks/scheduled-run-output.txt" }
+];
+
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(parent) parent.appendChild(e); return e; }
+function txt(parent,x,y,s,attrs={}){ const t=el("text",Object.assign({x,y},attrs),parent); t.textContent=s; return t; }
+
+// ---------- Module slides ----------
+function miniVisual(kind){
+  if(kind==="contradictions") return `
+    <div class="grid" style="gap:10px">
+      ${[["Policy","Never store identity","rook.responders","stores cover names"],
+         ["Roadmap","Availability Confidence in 4.2","4.2 release notes","not there"],
+         ["Handoff","\"August is always soft\"","rook.pings","3 Aug = best week"]].map(r=>`
+        <div style="display:grid;grid-template-columns:1fr 26px 1fr;gap:8px;align-items:center">
+          <div class="card" style="padding:12px"><div class="small muted">${r[0]}</div><b class="small">${r[1]}</b></div>
+          <div class="arrow" style="text-align:center;font-weight:700">≠</div>
+          <div class="card" style="padding:12px;border-color:var(--accent)"><div class="small muted">${r[2]}</div><b class="small">${r[3]}</b></div>
+        </div>`).join("")}
+    </div>`;
+  if(kind==="tickets") return `<svg id="ticketsChart" viewBox="0 0 480 230" role="img" aria-label="Support tickets by theme"></svg><p class="src">Ticket counts by theme, 147 tickets</p>`;
+  if(kind==="timeline") return `<svg id="timelineChart" viewBox="0 0 480 240" role="img" aria-label="Missed share of pings by week with ticket theme start dates"></svg><p class="src">Missed % of pings by week, with first ticket of each theme</p>`;
+  if(kind==="pipeline") return `<svg id="pipeChart" viewBox="0 0 480 300" role="img" aria-label="Code workflow: offer.py, routing.py, history.py, config.py"></svg>`;
+  if(kind==="proto") return `
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="display:grid;grid-template-columns:1.4fr 1fr">
+        <div style="padding:16px;border-right:1px solid var(--line)">
+          <div class="small muted">Handler console</div>
+          <div class="card" style="padding:12px;margin-top:8px;border-color:var(--accent)">
+            <b class="small">Responder D · gone quiet</b>
+            <div class="small muted">Missed 3 of last 5 pings, so lower in the order for this area.</div>
+            <div class="small" style="color:var(--accent);margin-top:6px">See why →</div>
+          </div>
+          <div class="card" style="padding:12px;margin-top:8px">
+            <b class="small">Responder E · busy</b>
+            <div class="small muted">Some of this is work D would usually get.</div>
+          </div>
+        </div>
+        <div style="padding:16px;background:var(--bg)">
+          <div class="small muted">Responder phone</div>
+          <div class="card" style="padding:12px;margin-top:8px;border-radius:18px">
+            <div class="small">That one went to someone else.</div>
+            <div class="small muted">Missing it doesn't count against you like a no.</div>
+          </div>
+          <div class="card" style="padding:10px;margin-top:8px;border-radius:18px;text-align:center"><b class="small" style="color:var(--good)">You're back in rotation</b></div>
+        </div>
+      </div>
+    </div><p class="src">Sketch of two prototype screens. The full click-through is two sections down.</p>`;
+  if(kind==="skill") return `
+    <div class="term"><div class="bar"><i></i><i></i><i></i><span>scheduled-run-output.txt</span></div>
+<pre style="margin:0;white-space:pre-wrap;font:inherit">review-checklist — scheduled run
+Started: 2026-10-13 03:00 UTC
+
+bulk-callout.txt ........... <span class="ps">owner named: NO</span>
+routing-override-audit-log . <span class="ps">success measure: NO</span>
+requisition-approval-chains  <span class="ps">scope bounded: NO</span>
+handler-phone-app.txt ...... <span class="ps">problem first: NO</span>
+
+4 briefs checked, 4 flagged, 1 flag each.</pre></div>`;
+  return "";
+}
+
+const modHost = document.getElementById("modules");
+MODULES.forEach(m=>{
+  const s=document.createElement("section");
+  s.className="slide"; s.id="s-m"+m.n;
+  const promptBlock = m.prompt
+    ? `<div class="term"><div class="bar"><i></i><i></i><i></i><span>${m.n}-${m.name.toLowerCase().replace(/ /g,"-")}/prompts.md</span></div><span class="ps">›</span> ${m.prompt}</div>`
+    : `<div class="term empty"><div class="bar"><i></i><i></i><i></i><span>06-sidekicks/prompts.md</span></div>### 1.  (blank)<br>### 2.  (blank)<br>### 3.  (blank)<br><br>No prompt was saved for this module, so none is quoted here. The artifact is the skill and its scheduled run.</div>`;
+  s.innerHTML = `<div class="wrap">
+    <div class="badge"><b>Module ${m.n}</b> ${m.name}</div>
+    <h2>${m.title}</h2>
+    <div class="mod">
+      <div>
+        <div class="small muted" style="margin-bottom:8px;font-weight:600">The prompt I wrote</div>
+        ${promptBlock}
+        <div class="small muted" style="margin:20px 0 8px;font-weight:600">What it found</div>
+        <p>${m.finding}</p>
+        <ul class="tight small">${m.bullets.map(b=>`<li>${b}</li>`).join("")}</ul>
+        <div class="src">Sources: ${m.src}</div>
+      </div>
+      <div class="card">${miniVisual(m.visual)}</div>
+    </div>
+  </div>`;
+  modHost.appendChild(s);
+});
+
+// ---------- Charts ----------
+function drawWeekly(){
+  const svg=document.getElementById("weekly"); svg.innerHTML="";
+  const W=980,H=360,L=48,R=16,T=40,B=44, iw=W-L-R, ih=H-T-B, bw=iw/WEEKS.length;
+  [0,25,50,75,100].forEach(v=>{const y=T+ih*(1-v/100); el("line",{x1:L,x2:W-R,y1:y,y2:y,stroke:css("--line")},svg); txt(svg,L-8,y+4,v+"%",{"text-anchor":"end"});});
+  WEEKS.forEach((w,i)=>{
+    const x=L+i*bw+bw*0.18, wd=bw*0.64; let y=T+ih;
+    [[w[1],"--taken","taken"],[w[2],"--down","turned down"],[w[3],"--missed","missed"]].forEach(([v,c,lab])=>{
+      const h=ih*v/100; y-=h;
+      const r=el("rect",{x,y,width:wd,height:h,fill:css(c)},svg);
+      const t=el("title",{},r); t.textContent=`Week of ${w[0]}: ${v}% ${lab}`;
+    });
+    txt(svg,x+wd/2,H-B+18,w[0],{"text-anchor":"middle"});
+    if(w[3]>10) txt(svg,x+wd/2,T+ih*(1-(w[1]+w[2]+w[3])/100)+18,w[3]+"%",{"text-anchor":"middle",style:"fill:#fff;font-weight:700"});
+  });
+  const rx=L+6*bw+bw*0.18+bw*0.64*(2/7);
+  el("line",{x1:rx,x2:rx,y1:T-30,y2:T+ih,stroke:css("--ink"),"stroke-dasharray":"4 4"},svg);
+  txt(svg,rx-8,T-18,"4.2 ships · 12 Aug · ping wait 90 s → 60 s",{"text-anchor":"end",style:`fill:${css("--ink")};font-weight:600;font-size:14px`});
+}
+
+function drawLoop(){
+  const g=document.getElementById("loopNodes"); g.innerHTML="";
+  const nodes=[
+    [140,80,"Ping arrives","phone rings"],
+    [490,80,"60 s run out","was 90 s before 4.2"],
+    [840,80,"Counted as missed","scored like a \"no\""],
+    [840,290,"Score −0.12","no recovery over time"],
+    [490,290,"Lower in the order","fewer pings come"],
+    [140,290,"No chance to earn +0.08","only a take adds points"]
+  ];
+  const ac=css("--accent");
+  const pairs=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]];
+  pairs.forEach(([a,b])=>{
+    const A=nodes[a],B=nodes[b]; let x1=A[0],y1=A[1],x2=B[0],y2=B[1];
+    if(y1===y2){ const d=x2>x1?1:-1; x1+=d*125; x2-=d*130; } else { const d=y2>y1?1:-1; y1+=d*42; y2-=d*46; }
+    el("line",{x1,y1,x2,y2,stroke:ac,"stroke-width":2.5,"marker-end":"url(#ah)"},g);
+  });
+  nodes.forEach((n,i)=>{
+    const hot=i>=2&&i<=4;
+    el("rect",{x:n[0]-120,y:n[1]-38,width:240,height:76,rx:12,fill:hot?css("--accent-soft"):css("--surface"),stroke:hot?ac:css("--line"),"stroke-width":hot?2:1},g);
+    txt(g,n[0],n[1]-4,n[2],{"text-anchor":"middle",style:`fill:${css("--ink")};font-size:16px;font-weight:700`});
+    txt(g,n[0],n[1]+18,n[3],{"text-anchor":"middle",style:"font-size:13px"});
+  });
+  txt(g,490,192,"The four responders fell into this loop in the first week and stayed there.",{"text-anchor":"middle",style:`fill:${css("--accent")};font-size:14px;font-weight:600`});
+}
+
+function drawTickets(){
+  const svg=document.getElementById("ticketsChart"); if(!svg) return; svg.innerHTML="";
+  const rows=[["Phones gone quiet",30,true],["Supply / gear",26,false],["Gone before I could answer",16,true],["Saved filters",16,false],["Layout & navigation",17,false],["Profile & availability",11,false],["Sign-in",6,false]];
+  rows.sort((a,b)=>b[1]-a[1]);
+  rows.forEach((r,i)=>{
+    const y=12+i*30, w=r[1]/30*240;
+    txt(svg,180,y+15,r[0],{"text-anchor":"end"});
+    el("rect",{x:190,y,width:w,height:20,rx:4,fill:r[2]?css("--accent"):css("--down")},svg);
+    txt(svg,196+w,y+15,r[1],{style:`fill:${css("--ink")};font-weight:600`});
+  });
+  txt(svg,190,226,"Orange = linked to 4.2 routing",{style:`fill:${css("--accent")}`});
+}
+
+function drawTimeline(){
+  const svg=document.getElementById("timelineChart"); if(!svg) return; svg.innerHTML="";
+  const L=36,R=10,T=20,B=34,W=480,H=240,iw=W-L-R,ih=H-T-B, max=25;
+  [0,10,20].forEach(v=>{const y=T+ih*(1-v/max); el("line",{x1:L,x2:W-R,y1:y,y2:y,stroke:css("--line")},svg); txt(svg,L-6,y+4,v+"%",{"text-anchor":"end"});});
+  const px=i=>L+i*(iw/(WEEKS.length-1)), py=v=>T+ih*(1-v/max);
+  el("path",{d:WEEKS.map((w,i)=>(i?"L":"M")+px(i)+","+py(w[3])).join(" "),fill:"none",stroke:css("--missed"),"stroke-width":3},svg);
+  WEEKS.forEach((w,i)=>{ const c=el("circle",{cx:px(i),cy:py(w[3]),r:4,fill:css("--missed")},svg); el("title",{},c).textContent=`${w[0]}: ${w[3]}% missed`; if(i%3===0) txt(svg,px(i),H-B+18,w[0],{"text-anchor":i===0?"start":i===9?"end":"middle"}); });
+  const x1=px(6)-15, x2=px(7)-15;
+  el("line",{x1,x2:x1,y1:T,y2:T+ih,stroke:css("--ink"),"stroke-dasharray":"3 3"},svg);
+  el("line",{x1:x2,x2,y1:T,y2:T+ih,stroke:css("--ink"),"stroke-dasharray":"3 3"},svg);
+  txt(svg,x1-4,T+8,"12 Aug · \"gone before I answered\"",{"text-anchor":"end",style:`fill:${css("--ink")};font-size:11px`});
+  txt(svg,x2+4,T+ih-6,"17 Aug · \"phone quiet\"",{style:`fill:${css("--ink")};font-size:11px`});
+}
+
+function drawPipe(){
+  const svg=document.getElementById("pipeChart"); if(!svg) return; svg.innerHTML="";
+  const ac=css("--accent");
+  const box=(x,y,w,h,t,s,hot)=>{ el("rect",{x,y,width:w,height:h,rx:10,fill:hot?css("--accent-soft"):css("--surface"),stroke:hot?ac:css("--line"),"stroke-width":hot?2:1},svg); txt(svg,x+w/2,y+24,t,{"text-anchor":"middle",style:`fill:${css("--ink")};font:600 14px ui-monospace,Consolas,monospace`}); txt(svg,x+w/2,y+44,s,{"text-anchor":"middle",style:"font-size:12px"}); };
+  const arr=(x1,y1,x2,y2,dash)=>el("line",{x1,y1,x2,y2,stroke:ac,"stroke-width":2,"marker-end":"url(#ah2)","stroke-dasharray":dash?"4 4":"none"},svg);
+  const defs=el("defs",{},svg); const mk=el("marker",{id:"ah2",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:7,markerHeight:7,orient:"auto"},defs); el("path",{d:"M0,0 L10,5 L0,10 z",fill:ac},mk);
+  box(150,10,180,58,"offer.py","runs each callout",false);
+  box(10,120,180,58,"routing.py","ranks responders",false);
+  box(290,120,180,58,"history.py","miss = −0.12 = no",true);
+  box(150,232,180,58,"config.py","wait 60 s · weights",false);
+  arr(200,68,130,118); arr(280,68,350,118);
+  txt(svg,96,96,"who's next?",{"text-anchor":"middle"}); txt(svg,384,96,"record outcome",{"text-anchor":"middle"});
+  arr(290,149,192,149); txt(svg,240,140,"score",{"text-anchor":"middle"});
+  arr(240,230,140,180,true); arr(240,230,340,180,true);
+  txt(svg,240,214,"settings",{"text-anchor":"middle"});
+}
+
+function drawAll(){ drawWeekly(); drawLoop(); drawTickets(); drawTimeline(); drawPipe(); }
+drawAll();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",drawAll);
+
+// ---------- Theme toggle ----------
+document.getElementById("themeBtn").onclick=()=>{
+  const r=document.documentElement, dark=r.dataset.theme? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark?"light":"dark"; drawAll();
+};
+
+// ---------- Nav ----------
+const slides=[...document.querySelectorAll(".slide")];
+const dots=document.getElementById("dots");
+slides.forEach(s=>{ const a=document.createElement("a"); a.href="#"+s.id; a.title=(s.querySelector("h1,h2")||{}).textContent||""; dots.appendChild(a); });
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ const i=slides.indexOf(e.target); [...dots.children].forEach((d,j)=>d.classList.toggle("on",i===j)); }}),{threshold:.5});
+slides.forEach(s=>io.observe(s));
+addEventListener("scroll",()=>{ const h=document.documentElement; document.getElementById("progress").style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+"%"; });
+addEventListener("keydown",e=>{
+  if(e.target.tagName==="IFRAME") return;
+  const cur=slides.findIndex(s=>s.getBoundingClientRect().top>-innerHeight/2);
+  if(["ArrowDown","PageDown"].includes(e.key)){ e.preventDefault(); slides[Math.min(slides.length-1,cur+1)]?.scrollIntoView(); }
+  if(["ArrowUp","PageUp"].includes(e.key)){ e.preventDefault(); slides[Math.max(0,cur-1)]?.scrollIntoView(); }
+});
+</script>
+</body>
+</html>

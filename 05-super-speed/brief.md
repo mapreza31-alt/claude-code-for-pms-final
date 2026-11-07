@@ -1,7 +1,7 @@
 # Quiet responders: what we'd build instead of the quick fix
 
 **To:** Helen Achebe, Director of Product  
-**From:** Dispatch PM  
+**From:** Maria Apreza, Dispatch PM (owner of this brief)  
 **Date:** 7 Nov 2026 (rough draft, not polished)  
 **Re:** Your note asking to see the fix from the user's side before anyone touches the code
 
@@ -9,11 +9,26 @@
 
 ## The short version
 
-The quick fix changes one number. What we'd actually build gives **handlers** and **responders** a way to see what a missed ping means, and gives a responder a way back after one. The code changes (scoring a miss separately, letting the score ease back, a floor, a one-time reset) ship together in 4.3 so that what people see on screen is actually true underneath.
+**The problem:** since 4.2 cut the ping wait to 60 seconds, four responders have barely been pinged. The code scores a missed ping exactly like a "no" and never lets the score recover, so a few early misses pushed them down the order with no way back. Their work moved to three others, unfilled callouts doubled, and handlers can't see any of it happening.
+
+The quick fix changes one number. What we'd actually build gives **handlers** and **responders** a way to see what a missed ping means, and gives a responder a way back after one. The 4.3 package ships together, so that what people see on screen is actually true underneath:
+
+- Score a miss separately from a turn-down, and let misses ease back over a few days.
+- A score floor, so nobody drops off the order entirely.
+- An alert when a callout goes unfilled.
+- A "Tap if you got this" check for responders who keep missing when they're first in line.
+- A one-time reset for the four responders, but **only once we know why they keep missing**. Otherwise they'll drop straight back down.
 
 **My recommendation:** don't ship the one-number change this afternoon. It puts responders back on the list but doesn't fix why they keep missing, and nobody can see that it happened.
 
-*Responder names are replaced with Responder A–D until you decide whether cover names can appear in briefs (decision 4).*
+*Responder names are replaced with Responder A–D until you decide whether cover names can appear in briefs (decision 3).*
+
+## Why this is happening
+
+- **The code treats a miss like a no.** Our glossary records a ping as **taken**, **turned down** or **missed** (the ping wait ran out), but says both misses and turn-downs lower the score. The code does exactly that: −0.12 either way, with no recovery over time. Wen's 2019 note in the code asks whether the score should ease back: yes for "somebody who had a bad month," no for "somebody who has stopped taking work." *(Glossary; `history.py`)*
+- **4.2 made that gap matter.** The ping wait went from 90 to 60 seconds. Misses rose from 2.3% to 18% of pings, while turn-downs *fell* (21% → 18%). Four responders (A–D) dropped down the ranking and had no way back, and their work moved to three others. Weekly acceptance went from 75–78% to 54% in the release week, then 66%, 67% and 73%. The four haven't recovered: since 19 Aug they miss 75% of pings even when first in line. *(4.2 release notes; rook.pings, not yet checked against Ravi's weekly report)*
+- **This answers Marcus's 14 Aug question, pending Wen.** He asked whether the 4.2 ranking change was meant to apply to responders who'd been turning jobs down. Our working answer: 4.2 made the score count *less*, but because the code can't tell a miss from a "no," the shorter wait ended up penalising people who never said no. *(4.2 release comments)*
+- **It likely explains much of what Support saw.** By 26 Aug, about ⅔ of tickets were "my phone never goes off" and ⅓ were "it was gone before I could answer." Nadia linked the second to the 60-second wait and couldn't explain the first. The ranking drop fits much of the first, but not all: two of the four have no tickets at all, and some areas with many tickets saw only small drops. *(4.2 release comments; support tickets)*
 
 ## What a handler like Kip would notice
 
@@ -29,13 +44,6 @@ The quick fix changes one number. What we'd actually build gives **handlers** an
 - If someone keeps missing even when they're first in line, the app runs a quiet check ("Tap if you got this") that doesn't affect their score. This tells us whether their phone is actually getting the ping.
 
 **Click-through:** [prototype.html](prototype.html) shows the console and the phone side by side. Some numbers in it are made up for the mock-up.
-
-## Why this is happening
-
-- **The code treats a miss like a no.** Our glossary records a ping as **taken**, **turned down** or **missed** (the ping wait ran out), but says both misses and turn-downs lower the score. The code does exactly that: −0.12 either way, with no recovery over time. Wen's 2019 note in the code asks whether the score should ease back: yes for "somebody who had a bad month," no for "somebody who has stopped taking work." *(Glossary; `history.py`)*
-- **4.2 made that gap matter.** The ping wait went from 90 to 60 seconds. Misses rose from 2.3% to 18% of pings, while turn-downs *fell* (21% → 18%). Four responders (A–D) dropped down the ranking and had no way back, and their work moved to three others. Weekly acceptance went from 75–78% to 54% in the release week, then 66%, 67% and 73%. The four haven't recovered: since 19 Aug they miss 75% of pings even when first in line. *(4.2 release notes; rook.pings, not yet checked against Ravi's weekly report)*
-- **This answers Marcus's 14 Aug question, pending Wen.** He asked whether the 4.2 ranking change was meant to apply to responders who'd been turning jobs down. Our working answer: 4.2 made the score count *less*, but because the code can't tell a miss from a "no," the shorter wait ended up penalising people who never said no. *(4.2 release comments)*
-- **It likely explains much of what Support saw.** By 26 Aug, about ⅔ of tickets were "my phone never goes off" and ⅓ were "it was gone before I could answer." Nadia linked the second to the 60-second wait and couldn't explain the first. The ranking drop fits much of the first, but not all: two of the four have no tickets at all, and some areas with many tickets saw only small drops. *(4.2 release comments; support tickets)*
 
 ## What changes underneath (4.3)
 
@@ -70,8 +78,7 @@ The quick fix changes one number. What we'd actually build gives **handlers** an
 
 1. **Package, not patch:** hold the one-number change and ship the package in 4.3?
 2. **Reset the four** once the cause of their misses is known?
-3. **Owners:** every roadmap item still lists Priya. Can we agree new owners, and which items squeezed out of 4.2 (including Availability Confidence) are still Q3 commitments? Priya notes this conversation never happened.
-4. **Naming:** can responders' cover names appear in briefs like this one under Security Policy 4.1?
+3. **Naming:** can responders' cover names appear in briefs like this one under Security Policy 4.1?
 
 ## Questions you might have
 
