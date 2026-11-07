@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiet Responders Prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: scenario rail on top, then the handler console (sidebar + roster/callouts) beside the responder phone; stacks on phones. */
+:root {
+  --bg: #eceef3; --panel: #ffffff; --ink: #1b1f2a; --muted: #5b6273; --rule: #d6d9e1;
+  --accent: #3b3f9e; --accent-ink: #ffffff; --live: #b45f06; --live-bg: #fff3e4;
+  --ok: #2f6f5e; --ok-bg: #e5f3ee; --bad: #a3303a; --bad-bg: #fbe9ea; --warn-bg: #f1f2f7;
+  --side: #1f2333; --side-ink: #c9cce0; --phone: #1b1f2a; --phone-screen: #f8f9fb;
+  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1117; --panel: #181b24; --ink: #e6e8ee; --muted: #9aa1b2; --rule: #2c3140;
+  --accent: #9da2ff; --accent-ink: #11131a; --live: #f0a54a; --live-bg: #2e2416;
+  --ok: #6fc3a8; --ok-bg: #16281f; --bad: #f08a92; --bad-bg: #2f181b; --warn-bg: #222634;
+  --side: #0a0c12; --side-ink: #9aa1b2; --phone: #000000; --phone-screen: #1c1f2a; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1117; --panel: #181b24; --ink: #e6e8ee; --muted: #9aa1b2; --rule: #2c3140;
+  --accent: #9da2ff; --accent-ink: #11131a; --live: #f0a54a; --live-bg: #2e2416;
+  --ok: #6fc3a8; --ok-bg: #16281f; --bad: #f08a92; --bad-bg: #2f181b; --warn-bg: #222634;
+  --side: #0a0c12; --side-ink: #9aa1b2; --phone: #000000; --phone-screen: #1c1f2a; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-display); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: calc(20px + env(safe-area-inset-top, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)); }
+[hidden] { display: none !important; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { margin: 0; font-size: 1.5rem; font-stretch: 85%; font-weight: 800; text-wrap: balance; }
+.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; justify-content: space-between; }
+.back { color: var(--accent); font-size: .9rem; }
+.mono { font-family: var(--f-mono); }
+.label { font-family: var(--f-mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--panel); }
+.seg button { font: inherit; font-weight: 600; border: 0; background: transparent; color: var(--ink); padding: 8px 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.seg.sm button { padding: 4px 10px; font-size: .8rem; }
+button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 3px solid var(--live); outline-offset: 2px; }
+.steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.steps button { font: inherit; text-align: left; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 10px 12px; cursor: pointer; display: grid; gap: 2px; }
+.steps button[aria-current="step"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.steps .n { font-family: var(--f-mono); font-size: .7rem; color: var(--muted); }
+.steps .t { font-weight: 700; font-stretch: 90%; }
+.narr { margin: 0; background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 6px; padding: 12px 16px; max-width: 80ch; }
+.alt { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .85rem; color: var(--muted); }
+.stage { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .stage { grid-template-columns: 1fr; } .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* console */
+.console { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; min-width: 0; display: grid; grid-template-columns: 150px minmax(0, 1fr); }
+.side { background: var(--side); color: var(--side-ink); padding: 14px 10px; display: grid; gap: 4px; align-content: start; }
+.side .brand { font-weight: 800; font-stretch: 85%; color: #fff; padding: 0 8px 10px; font-size: 1.05rem; }
+.side button { font: inherit; text-align: left; background: transparent; color: inherit; border: 0; border-radius: 5px; padding: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.side button[aria-current="page"] { background: rgba(255,255,255,.12); color: #fff; font-weight: 700; }
+.side .off { padding: 8px; opacity: .55; font-size: .9rem; }
+.badge { font-family: var(--f-mono); font-size: .65rem; background: var(--bad); color: #fff; border-radius: 99px; padding: 1px 6px; }
+.main { min-width: 0; display: grid; align-content: start; }
+.bar { display: flex; justify-content: space-between; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--rule); font-size: .85rem; color: var(--muted); flex-wrap: wrap; }
+.bar b { color: var(--ink); }
+.alerts { display: grid; gap: 8px; padding: 12px 14px 0; }
+.alert { display: flex; gap: 10px; justify-content: space-between; align-items: center; flex-wrap: wrap; font-size: .9rem; padding: 10px 12px; border-radius: 6px; border: 1px solid transparent; }
+.alert.bad { background: var(--bad-bg); border-color: var(--bad); }
+.alert.live { background: var(--live-bg); border-color: var(--live); }
+.alert.done { background: var(--warn-bg); color: var(--muted); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; padding: 14px; }
+.card { border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.card h3 { margin: 0; font-size: 1.1rem; font-stretch: 85%; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.pill { font-family: var(--f-mono); font-size: .68rem; padding: 2px 7px; border-radius: 99px; background: var(--warn-bg); color: var(--muted); white-space: nowrap; }
+.pill.live { background: var(--live-bg); color: var(--live); }
+.pill.ok { background: var(--ok-bg); color: var(--ok); }
+.pill.bad { background: var(--bad-bg); color: var(--bad); }
+.stat { display: flex; gap: 14px; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.stat b { color: var(--ink); font-size: 1.05rem; }
+.note { font-size: .9rem; padding: 8px 10px; border-radius: 4px; background: var(--warn-bg); }
+.note.live { background: var(--live-bg); }
+.note.ok { background: var(--ok-bg); }
+.floor { font-size: .8rem; color: var(--muted); margin: 0; }
+.new { position: relative; }
+.new::before { content: "NEW"; position: absolute; top: -8px; right: 8px; font-family: var(--f-mono); font-size: .6rem; font-weight: 600; background: var(--accent); color: var(--accent-ink); padding: 1px 5px; border-radius: 3px; }
+.empty { font-size: .85rem; color: var(--muted); font-style: italic; margin: 0; }
+.why { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .85rem; }
+.why li { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dashed var(--rule); padding-bottom: 3px; font-variant-numeric: tabular-nums; }
+.checks { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: .85rem; }
+.checks li { display: flex; justify-content: space-between; gap: 8px; }
+.compose { display: grid; gap: 6px; }
+.compose textarea { font: inherit; font-size: .88rem; width: 100%; min-height: 84px; resize: vertical; border: 1px solid var(--rule); border-radius: 6px; padding: 8px; background: var(--phone-screen); color: var(--ink); }
+.compose .row { display: flex; gap: 8px; justify-content: flex-end; }
+.foot { font-size: .8rem; color: var(--muted); padding: 0 14px 14px; margin: 0; }
+table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+th, td { text-align: left; padding: 8px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--f-mono); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+td.t { font-family: var(--f-mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; }
+@media (max-width: 560px) { .console { grid-template-columns: 1fr; } .side { grid-auto-flow: column; overflow-x: auto; } .side .brand, .side .off { display: none; } }
+
+/* phone */
+.phonecol { display: grid; gap: 8px; justify-items: center; }
+.phone { width: 100%; max-width: 300px; background: var(--phone); border-radius: 34px; padding: 12px; }
+.screen { background: var(--phone-screen); border-radius: 24px; min-height: 480px; padding: 18px 16px; display: grid; gap: 12px; align-content: start; }
+.status { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: .7rem; color: var(--muted); }
+.big { font-size: 1.35rem; font-weight: 800; font-stretch: 85%; margin: 0; text-wrap: balance; }
+.screen p { margin: 0; }
+.msg { font-size: .85rem; padding: 8px 10px; border-radius: 10px; background: var(--ok-bg); }
+.count { font-family: var(--f-mono); font-size: 2.6rem; font-weight: 600; color: var(--live); font-variant-numeric: tabular-nums; line-height: 1; }
+.meter { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--live); }
+.btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn { font: inherit; font-weight: 700; border-radius: 10px; padding: 12px; cursor: pointer; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.sm { padding: 6px 10px; border-radius: 6px; font-size: .85rem; }
+.btn.wide { grid-column: 1 / -1; }
+.link { font: inherit; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; text-decoration: underline; justify-self: start; font-size: .85rem; }
+.hint { font-size: .8rem; color: var(--muted); text-align: center; max-width: 300px; margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div style="display:grid;gap:4px">
+      <span class="label" id="kicker"></span>
+      <h1 id="title"></h1>
+      <a class="back" href="brief.md">← Back to the brief</a>
+    </div>
+    <div style="display:grid;gap:4px">
+      <span class="label">Compare</span>
+      <div class="seg" role="group" aria-label="Version">
+        <button type="button" data-mode="today">4.2 today</button>
+        <button type="button" data-mode="new">Proposed (4.3)</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="steps" aria-label="Scenario steps" id="steps"></nav>
+  <p class="narr" id="narr"></p>
+  <div class="alt" id="alt" hidden></div>
+
+  <div class="stage">
+    <section class="console" aria-label="Handler console">
+      <nav class="side" aria-label="Console sections" id="side"></nav>
+      <div class="main">
+        <div class="bar"><span><b>Handler console</b> · Kip</span><span class="mono" id="clock"></span></div>
+        <div class="alerts" id="alerts"></div>
+        <div id="view"></div>
+      </div>
+    </section>
+    <div class="phonecol">
+      <span class="label" id="phonelabel"></span>
+      <div class="phone"><div class="screen" id="phone"></div></div>
+      <p class="hint" id="hint"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+// NAMED = true shows Kip's real responders by cover name (internal use only; see decision 4 in the brief).
+const NAMED = true;
+const D = NAMED ? "Meteor Mite" : "Responder D";
+const E = NAMED ? "The Gale" : "Responder E";
+
+const STEPS = [
+  { id: "quiet",    n: "Step 1", t: "A quiet week",           day: "Fri 21 Aug", time: "22:58" },
+  { id: "ping",     n: "Step 2", t: "A ping arrives",         day: "Fri 21 Aug", time: "23:14" },
+  { id: "unfilled", n: "Step 3", t: "Nobody took it",         day: "Fri 21 Aug", time: "23:31" },
+  { id: "later",    n: "Step 4", t: "Three days later",       day: "Mon 24 Aug", time: "21:05" },
+  { id: "check",    n: "Step 5", t: "Still missing when first", day: "Wed 26 Aug", time: "22:40" },
+];
+// p9: what happened to the Pier 9 ping in step 2; it carries into step 4.
+const S = { mode: "new", step: 0, outcome: null, left: 60, timer: null, tab: "roster", why: false, acked: false, p9: null, msg: null };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const nw = () => S.mode === "new";
+const sid = () => STEPS[S.step].id;
+const p9 = () => S.p9 || "missed";
+
+function stopTimer() { if (S.timer) { clearInterval(S.timer); S.timer = null; } }
+function startTimer() {
+  stopTimer(); S.left = 60;
+  // 60 s runs at 4x speed so the demo doesn't drag.
+  S.timer = setInterval(() => { S.left -= 1; if (S.left <= 0) { stopTimer(); act("missed"); return; } render(); }, 250);
+}
+function go(step) {
+  stopTimer(); S.step = step; S.outcome = null; S.left = 60; S.why = false; S.acked = false; S.msg = null;
+  if (sid() === "ping") startTimer();
+  render();
+}
+function act(outcome) {
+  stopTimer(); S.outcome = outcome;
+  if (sid() === "ping") S.p9 = outcome;
+  render();
+}
+
+/* ---------- console ---------- */
+function side() {
+  const unread = nw() && sid() === "unfilled" && !S.acked ? `<span class="badge">1</span>` : "";
+  return `<span class="brand">Rook Dispatch</span>
+    <button type="button" data-tab="roster" ${S.tab === "roster" ? 'aria-current="page"' : ""}>My responders</button>
+    <button type="button" data-tab="callouts" ${S.tab === "callouts" ? 'aria-current="page"' : ""}>Callouts ${unread}</button>
+    <span class="off">Gear (Supply)</span><span class="off">Reports</span>`;
+}
+
+function alerts() {
+  if (!nw()) return "";
+  const out = [];
+  if (sid() === "unfilled") {
+    out.push(S.acked
+      ? `<div class="alert done new"><span>Unfilled callout · Medical, Dock Road · acknowledged by Kip. Support has a copy.</span></div>`
+      : `<div class="alert bad new"><span><b>Unfilled callout</b> · Medical, Dock Road, 23:22 · 4 responders pinged: 2 missed, 2 turned down. Nobody took it. Support has been told.</span>
+         <button class="btn sm" type="button" id="b-ackcall">Acknowledge</button></div>`);
+  }
+  if (sid() === "quiet" || sid() === "check") {
+    out.push(`<div class="alert live new"><span><b>Gone quiet</b> · ${D}: 2 pings this week, usually 8. Flagged before anyone has to file a ticket.</span>
+      <button class="btn sm" type="button" data-why="1">See why</button></div>`);
+  }
+  return out.join("");
+}
+
+const WHY = `<ul class="why">
+  <li><span>14 Aug · Pier 3</span><span>Missed</span></li>
+  <li><span>15 Aug · Canal St</span><span>Taken</span></li>
+  <li><span>16 Aug · Harbor Market</span><span>Missed</span></li>
+  <li><span>18 Aug · Tannery roof</span><span>Turned down</span></li>
+  <li><span>19 Aug · Dock Road</span><span>Missed</span></li>
+</ul>`;
+const FLOOR = `<p class="floor">${D} always gets some pings and can't drop out of the order entirely.</p>`;
+
+// What Kip would send from the console, per step (named version only).
+const DRAFT = {
+  quiet: `You're lower in the order for a few days because of 3 missed pings. Missed isn't counted as a no and it eases off on its own. Taking a callout gets you back sooner. Nothing's broken.`,
+  unfilled: `Dock Road went to someone else, but a miss doesn't count against you like a no. You're still in the order.`,
+  check: `Rook is checking whether your phone is getting pings. Tap the check when it shows up, and make sure your availability is right.`,
+};
+function compose() {
+  if (!NAMED || !nw() || !DRAFT[sid()]) return "";
+  if (S.msg === "sent") return `<div class="note ok">Message sent to ${D} at ${STEPS[S.step].time}.</div>`;
+  if (S.msg === "draft") return `<div class="compose"><label class="label" for="msgtext">Message to ${D}</label>
+    <textarea id="msgtext">${esc(DRAFT[sid()])}</textarea>
+    <div class="row"><button class="btn sm" type="button" id="b-msgcancel">Cancel</button><button class="btn sm primary" type="button" id="b-msgsend">Send</button></div></div>`;
+  return `<button class="btn sm" type="button" id="b-msg" style="justify-self:start">Message ${D}</button>`;
+}
+
+function cardD() {
+  const id = sid(), o = S.outcome;
+  let head = `<h3>${D} <span class="pill">Available</span></h3>`;
+  let stat = `<div class="stat"><span><b>2</b> pings this week</span><span><b>0</b> taken</span></div>`;
+  let body = "";
+  const whyBtn = nw() ? `<button class="link" type="button" data-why="1">${S.why ? "Hide" : "Why here?"}</button>${S.why ? WHY : ""}` : "";
+  if (id === "quiet" || id === "unfilled") {
+    if (nw()) head = `<h3>${D} <span class="pill live">Gone quiet</span></h3>`;
+    body = nw()
+      ? `<div class="note new">Missed 3 of the last 5 pings, so lower in the order for Harborside. <b>A miss isn't counted as a no.</b> Back near the top in about 3 days, or sooner after a take.</div>${FLOOR}${whyBtn}`
+      : `<p class="empty">Last ping 3 days ago.</p>`;
+  }
+  if (id === "ping") {
+    if (!o) {
+      body = nw()
+        ? `<div class="note live new"><b>Ping live now</b> · Warehouse fire, Pier 9 · <span class="mono">${S.left}s</span> left</div>`
+        : `<p class="empty">Last ping 3 days ago.</p>`;
+      if (nw()) head = `<h3>${D} <span class="pill live">Ping live</span></h3>`;
+    } else if (o === "taken") {
+      head = `<h3>${D} <span class="pill ok">Engaged</span></h3>`;
+      body = `<div class="note ok">Took the Pier 9 callout${nw() ? " with " + S.left + " s left. Back near the top of the order." : "."}</div>`;
+    } else if (o === "declined") {
+      body = nw() ? `<div class="note new">Turned down Pier 9. Went to the next responder. Counted as a no.</div>` : `<p class="empty">Last ping 3 days ago.</p>`;
+    } else {
+      body = nw()
+        ? `<div class="note new">No answer in 60 s on Pier 9. Went to the next responder. <b>Counted as a miss, not a no.</b></div>`
+        : `<p class="empty">Last ping 3 days ago.</p>`;
+    }
+  }
+  if (id === "later") {
+    const down = p9() === "declined";
+    if (!nw()) {
+      stat = `<div class="stat"><span><b>1</b> ping this week</span><span><b>0</b> taken</span></div>`;
+      body = `<p class="empty">Last ping 4 days ago.</p>`;
+    } else if (down) {
+      head = `<h3>${D} <span class="pill live">Lower in the order</span></h3>`;
+      stat = `<div class="stat"><span><b>3</b> pings this week</span><span><b>0</b> taken</span></div>`;
+      body = `<div class="note new">Still lower in the order. Turned down Pier 9, and <b>a turn-down stays until the next take.</b> Misses from last week have eased off.</div>${FLOOR}`;
+    } else {
+      head = `<h3>${D} <span class="pill ok">Available</span></h3>`;
+      stat = `<div class="stat"><span><b>6</b> pings this week</span><span><b>4</b> taken</span></div>`;
+      body = `<div class="note ok new">Back in rotation and near the top for Harborside. ${p9() === "taken" ? "Taking Pier 9 moved them back up." : "Last week's misses have eased off."}</div>`;
+    }
+  }
+  if (id === "check") {
+    if (nw()) {
+      head = `<h3>${D} <span class="pill live">Checking why</span></h3>`;
+      const phoneOk = ["ack", "availYes", "availNo"].includes(o);
+      const avail = o === "availYes" ? "confirmed ✓" : o === "availNo" ? "corrected: off until tomorrow" : "not checked yet";
+      body = `<div class="note live new">Missed 6 of 8 pings while first in line. Checking the three likely causes:
+        <ul class="checks" style="margin-top:6px">
+          <li><span>Pings reaching the phone</span><b>${phoneOk ? "received ✓" : "test sent, waiting"}</b></li>
+          <li><span>Availability right</span><b>${avail}</b></li>
+          <li><span>Answer time</span><b>avg 68 s, wait is 60 s</b></li>
+        </ul></div>
+        <p class="floor">Nothing here changes ${D}'s place in the order. If the phone test doesn't arrive, support will contact you.</p>${whyBtn}`;
+    } else body = `<p class="empty">Last ping 2 days ago.</p>`;
+  }
+  return `<article class="card">${head}${stat}${body}${compose()}</article>`;
+}
+
+function cardE() {
+  const steady = sid() === "later" && nw() && p9() !== "declined";
+  const linked = NAMED ? ` Some of this is work ${D} would usually get while lower in the order.` : "";
+  return `<article class="card"><h3>${E} <span class="pill ${steady ? "ok" : "live"}">${steady ? "Steady" : "Busy"}</span></h3>
+    <div class="stat"><span><b>${steady ? 9 : 14}</b> pings this week</span><span><b>${steady ? 8 : 12}</b> taken</span></div>
+    ${nw() && !steady ? `<div class="note new">Busier than usual: 14 pings this week, usually 8.${linked}</div>` : ``}</article>`;
+}
+
+function roster() {
+  return `<div class="cards">${cardD()}${cardE()}</div>
+    ${nw() ? `<p class="foot">You see your own responders only, by cover name. Nobody else's place in the order is shown.</p>` : ""}`;
+}
+
+function callouts() {
+  const words = { taken: "Taken", declined: nw() ? "Turned down → next responder" : "Moved on", missed: nw() ? "Missed (not a no) → next responder" : "Moved on" };
+  const rows = [];
+  if (S.step >= 2) rows.push(["Fri 23:22", "Medical, Dock Road", `${D} + 3 others`, nw() ? `<span class="pill bad">Unfilled · nobody took it</span>` : "Closed"]);
+  if (S.step >= 1) rows.push(["Fri 23:14", "Warehouse fire, Pier 9", D, S.step === 1 && !S.outcome ? "Ping live" : words[p9()]]);
+  rows.push(
+    ["Fri 22:51", "Flooded underpass, Canal St", E, "Taken"],
+    ["Fri 21:30", "Crowd, Harbor Market", E, "Taken"],
+    ["Fri 19:05", "Rooftop rescue, Tannery", E, nw() ? "Turned down → next responder" : "Moved on"],
+  );
+  return `<div class="tablewrap"><table><thead><tr><th>Time</th><th>Callout</th><th>Pinged</th><th>What happened</th></tr></thead><tbody>
+    ${rows.map((r) => `<tr><td class="t">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+/* ---------- phone ---------- */
+function phone() {
+  const id = sid(), o = S.outcome;
+  const bar = `<div class="status"><span>${STEPS[S.step].time}</span><span>Rook</span></div>`
+    + (S.msg === "sent" ? `<div class="msg"><b>Kip:</b> ${esc(S.sentText || DRAFT[id])}</div>` : "");
+  const idle = `<p class="label">Callouts</p><p class="big">No callouts</p><p class="empty">Nothing waiting for you.</p>`;
+  const floor = `<p style="font-size:.85rem;color:var(--muted)">You'll always get some pings. You can't drop out of the order entirely.</p>`;
+  if (id === "quiet") return bar + (nw()
+    ? `<p class="label">Your status</p><p class="big">You're lower in the order for now</p>
+       <p>You missed 3 of your last 5 pings. A miss isn't counted as a no, and it fades on its own.</p>
+       <div class="note">Back near the top for Harborside in about <b>3 days</b>. Taking a callout gets you there sooner.</div>${floor}`
+    : idle);
+  if (id === "ping") {
+    if (!o) return bar + `<p class="label">New callout</p><p class="big">Warehouse fire, Pier 9</p>
+      <p>Structural-entry · 6 min away</p>
+      <div class="count">${S.left}s</div><div class="meter"><i style="width:${S.left / 60 * 100}%"></i></div>
+      ${nw() ? `<p style="font-size:.85rem;color:var(--muted)">Kip can see this too.</p>` : ``}
+      <div class="btns"><button class="btn primary" id="b-take" type="button">Take it</button><button class="btn" id="b-decline" type="button">Turn down</button></div>
+      <button class="link" id="b-miss" type="button">Let it run out</button>`;
+    if (o === "taken") return bar + `<p class="label">Callout</p><p class="big">It's yours. Pier 9.</p><p>${nw() ? "Kip has been told." : ""}</p>`;
+    if (o === "declined") return bar + `<p class="label">Callout</p><p class="big">Turned down</p>
+      <p>${nw() ? "Pier 9 went to someone else. Turning down lowers your place in the order until you take one." : "This callout has been reassigned."}</p>`;
+    return bar + (nw()
+      ? `<p class="label">Callout</p><p class="big">That one went to someone else</p>
+         <p>No answer in 60 seconds, so Pier 9 moved on.</p>
+         <div class="note"><b>Missing it doesn't count against you like a no.</b> It has a small effect and fades within a few days.</div>`
+      : `<p class="label">Callout</p><p class="big">This callout is no longer available.</p>`);
+  }
+  if (id === "unfilled") return bar + (nw()
+    ? `<p class="label">Missed ping</p><p class="big">Dock Road went to someone else</p>
+       <p>No answer in 60 seconds. Missing it doesn't count against you like a no.</p>`
+    : idle);
+  if (id === "later") {
+    if (!nw()) return bar + idle;
+    if (p9() === "declined") return bar + `<p class="label">Your status</p><p class="big">You're still lower in the order</p>
+      <p>You turned down Pier 9. Turn-downs don't fade on their own: taking your next callout moves you back up.</p>${floor}`;
+    return bar + `<p class="label">Your status</p><p class="big">You're back in rotation</p><p>Last week's misses have eased off. You'll get pings in your usual order again.</p>`;
+  }
+  if (id === "check") {
+    if (!nw()) return bar + idle;
+    if (!o) return bar + `<p class="label">Quick check · 1 of 2</p><p class="big">Did this reach you?</p>
+      <p>A few recent pings went unanswered. Tap so we know your phone is getting them. This isn't a callout and doesn't affect your score.</p>
+      <div class="btns"><button class="btn primary wide" id="b-ack" type="button">Tap if you got this</button></div>`;
+    if (o === "ack") return bar + `<p class="label">Quick check · 2 of 2</p><p class="big">Is your availability right?</p>
+      <p>You're marked <b>available until 06:00</b>. If that's wrong, you'll get pings you can't answer.</p>
+      <div class="btns"><button class="btn primary" id="b-availyes" type="button">Yes, that's right</button><button class="btn" id="b-availno" type="button">No, I'm off</button></div>`;
+    return bar + `<p class="big">Thanks, you're all set</p><p>${o === "availNo" ? "You're marked off until tomorrow, so you won't get pings you can't answer." : "Your phone is getting pings and your availability is right."} Nothing about this counted toward your place.</p>`;
+  }
+}
+
+const NARR = {
+  quiet:    { today: `Today: ${D}'s card only says when the last ping was. Nothing says why the phone went quiet, and ${E}'s card is on fire. Kip: "one card's dead quiet and the other's on fire."`,
+              new: `Proposed: the console flags that ${D} has gone quiet and says why. Click "See why" or "Why here?" for the last five pings.${NAMED ? " Try \"Message " + D + "\" to send the explanation." : ""} Nothing here is a setting.` },
+  ping:     { today: "Today: only the phone knows a ping is live, and the console doesn't say what happened when it moves on. Try letting it run out.",
+              new: "Proposed: Kip sees the ping and the countdown. Try Take it, Turn down, or letting it run out. What you pick carries into step 4." },
+  unfilled: { today: "Today: nobody is told when a callout goes unfilled. Kip and support hear about it when a ticket comes in.",
+              new: "Proposed: an unfilled callout alerts Kip and support straight away. Click Acknowledge, or open Callouts to see it in the log." },
+  later:    { today: `Today: the score never recovers on its own, so ${D} stays quiet until a ping happens to land.`,
+              new: "Proposed: misses ease back over a few days; turn-downs stay until the next take. Switch below to compare the two." },
+  check:    { today: `Today: nobody notices that ${D} misses most pings even when first in line.`,
+              new: "Proposed: if someone keeps missing while first in line, the console checks the three likely causes. Answer both checks on the phone. None of it affects the score." },
+};
+const HINT = { ping: "The 60 s countdown runs at 4× speed." };
+
+function alt() {
+  if (sid() !== "later" || !nw()) return "";
+  const cur = p9();
+  return `<span>In step 2 ${D}…</span><div class="seg sm" role="group" aria-label="What happened at Pier 9">
+    <button type="button" data-p9="missed" aria-pressed="${cur === "missed"}">missed it</button>
+    <button type="button" data-p9="declined" aria-pressed="${cur === "declined"}">turned it down</button>
+    <button type="button" data-p9="taken" aria-pressed="${cur === "taken"}">took it</button></div>`;
+}
+
+function render() {
+  const st = STEPS[S.step];
+  document.title = NAMED ? `Kip and ${D}` : "Quiet Responders Prototype";
+  $("kicker").textContent = "Rook Dispatch · clickable mock-up · example data" + (NAMED ? " · named version for internal use" : "");
+  $("title").textContent = `Kip's console and ${D}'s phone`;
+  $("phonelabel").textContent = `${D}'s phone`;
+  $("clock").textContent = `Harborside · ${st.day}, ${st.time}`;
+  document.querySelectorAll(".seg[aria-label='Version'] button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === S.mode)));
+  $("steps").innerHTML = STEPS.map((s, i) => `<button type="button" data-i="${i}" ${i === S.step ? 'aria-current="step"' : ""}><span class="n">${s.n}</span><span class="t">${s.t}</span></button>`).join("");
+  $("narr").textContent = NARR[st.id][nw() ? "new" : "today"];
+  $("alt").innerHTML = alt(); $("alt").hidden = !$("alt").innerHTML;
+  $("side").innerHTML = side();
+  $("alerts").innerHTML = alerts(); $("alerts").hidden = !$("alerts").innerHTML;
+  $("view").innerHTML = S.tab === "roster" ? roster() : callouts();
+  $("phone").innerHTML = phone();
+  $("hint").textContent = HINT[st.id] || "";
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.mode) { S.mode = t.dataset.mode; go(S.step); return; }
+  if (t.dataset.i !== undefined) { go(Number(t.dataset.i)); return; }
+  if (t.dataset.tab) { S.tab = t.dataset.tab; render(); return; }
+  if (t.dataset.why) { S.tab = "roster"; S.why = !S.why; render(); return; }
+  if (t.dataset.p9) { S.p9 = t.dataset.p9; render(); return; }
+  if (t.id === "b-ackcall") { S.acked = true; render(); return; }
+  if (t.id === "b-msg") { S.msg = "draft"; render(); $("msgtext").focus(); return; }
+  if (t.id === "b-msgcancel") { S.msg = null; render(); return; }
+  if (t.id === "b-msgsend") { S.sentText = $("msgtext").value; S.msg = "sent"; render(); return; }
+  if (t.id === "b-take") act("taken");
+  if (t.id === "b-decline") act("declined");
+  if (t.id === "b-miss") act("missed");
+  if (t.id === "b-ack") act("ack");
+  if (t.id === "b-availyes") act("availYes");
+  if (t.id === "b-availno") act("availNo");
+});
+render();
+</script>
+</body>
+</html>

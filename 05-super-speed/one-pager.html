@@ -1,0 +1,160 @@
+<title>Quiet Responders</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow reading column, like a memo on a handler's clipboard; side notes become inline chips. */
+:root {
+  --bg: #f3f4f6;
+  --paper: #ffffff;
+  --ink: #1b1f2a;
+  --muted: #5b6273;
+  --rule: #d9dce3;
+  --accent: #3b3f9e;      /* dispatch indigo */
+  --live: #b45f06;        /* ping amber */
+  --wiki: #2f6f5e;
+  --priya: #8a4b8f;
+  --analysis: #3b3f9e;
+  --code: #6b5a1e;
+  --chip-bg: #eef0f6;
+  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11131a; --paper: #181b24; --ink: #e6e8ee; --muted: #9aa1b2; --rule: #2c3140;
+  --accent: #9da2ff; --live: #f0a54a; --wiki: #6fc3a8; --priya: #d59bd9; --analysis: #9da2ff; --code: #d6c27a;
+  --chip-bg: #232736; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11131a; --paper: #181b24; --ink: #e6e8ee; --muted: #9aa1b2; --rule: #2c3140;
+  --accent: #9da2ff; --live: #f0a54a; --wiki: #6fc3a8; --priya: #d59bd9; --analysis: #9da2ff; --code: #d6c27a;
+  --chip-bg: #232736; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 56px; }
+main { max-width: 720px; margin: 0 auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 6px;
+  padding: clamp(20px, 5vw, 48px); display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--f-display); font-stretch: 85%; text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 800; }
+h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: .01em; }
+h3 { font-size: 1.05rem; font-weight: 700; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.2em; display: grid; gap: 6px; }
+section { display: grid; gap: 12px; }
+.eyebrow { font-family: var(--f-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.1rem; }
+.meta { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 16px; }
+blockquote { margin: 0; padding: 14px 18px; border-left: 3px solid var(--code); background: var(--chip-bg); font-family: var(--f-mono); font-size: .85rem; line-height: 1.6; white-space: pre-wrap; overflow-x: auto; }
+.src { display: inline-block; font-family: var(--f-mono); font-size: .66rem; font-weight: 600; letter-spacing: .04em; padding: 1px 6px; border-radius: 3px; border: 1px solid currentColor; vertical-align: 2px; white-space: nowrap; }
+.s-wiki { color: var(--wiki); } .s-priya { color: var(--priya); } .s-an { color: var(--analysis); } .s-code { color: var(--code); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: .85rem; color: var(--muted); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.who { border: 1px solid var(--rule); border-radius: 6px; padding: 16px 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.who .tag { font-family: var(--f-mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--live); }
+.screen { font-family: var(--f-display); font-stretch: 90%; font-size: .95rem; background: var(--chip-bg); border-radius: 4px; padding: 10px 12px; }
+.screen b { color: var(--accent); }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+.tbl { overflow-x: auto; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--f-display); font-stretch: 85%; font-weight: 700; }
+.cta { display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-display); font-weight: 700; font-stretch: 90%;
+  background: var(--accent); color: var(--paper); text-decoration: none; padding: 10px 16px; border-radius: 4px; justify-self: start; }
+.cta:focus-visible { outline: 3px solid var(--live); outline-offset: 2px; }
+.small { font-size: .88rem; color: var(--muted); }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+</style>
+
+<main>
+  <header style="display:grid;gap:10px">
+    <div class="eyebrow">Rook Dispatch · for Helen · rough, not polished</div>
+    <h1>When a responder goes quiet, people should be able to see why</h1>
+    <div class="meta"><span>From: Dispatch PM</span><span>Re: your note on the routing fix</span><span>7 Nov 2026</span></div>
+  </header>
+
+  <div class="legend">
+    <span><span class="src s-wiki">WIKI</span> rook-wiki</span>
+    <span><span class="src s-priya">PRIYA</span> handoff note</span>
+    <span><span class="src s-an">ANALYSIS</span> our earlier work (CLAUDE.md)</span>
+    <span><span class="src s-code">CODE</span> dispatch-routing</span>
+  </div>
+
+  <section>
+    <h2>What's happening, in one paragraph</h2>
+    <p>4.2 cut the ping wait to 60 seconds <span class="src s-wiki">WIKI</span>. The ranking code treats a missed ping exactly like a "no" (−0.12 each) and the score never recovers on its own <span class="src s-code">CODE</span> <span class="src s-an">ANALYSIS</span>. So a few early misses pushed Vesper, Farlight, The Undertow and Meteor Mite down the order, they stopped getting pings, and they had no way back. Their work moved to The Gale, Nightwell and Stormwrack <span class="src s-an">ANALYSIS</span>. Nobody on either side of the screen can see any of this. Kip has two cards side by side, one "dead quiet", one "on fire", and nothing that explains the gap <span class="src s-wiki">WIKI</span>.</p>
+  </section>
+
+  <section>
+    <h2>The note in the code</h2>
+    <p>This sits above <code>record_declined()</code> in <code>history.py</code>. It isn't signed; your message credits Wen <span class="src s-code">CODE</span>.</p>
+<blockquote># TODO(2019): should this ease back toward NEUTRAL_SCORE on its
+# own after a while? For: somebody who had a bad month shouldn't still
+# be carrying it in the spring. Against: if somebody has stopped taking
+# work, we probably want that to stick until they take work again.
+# Leaving it as-is for now.</blockquote>
+    <p>Both sides of her question are right, and they're about different people. "Stopped taking work" is someone saying no. "A bad month" is often someone who never got the chance to say yes. The code can't tell them apart, so it can't answer her. The data already can: turn-downs actually fell after 4.2 (21% → 18%), and the whole drop is misses <span class="src s-an">ANALYSIS</span>.</p>
+  </section>
+
+  <section>
+    <h2>What we'd build instead</h2>
+    <p>Two things people would notice. Each sits on a small change underneath, but the change is the plumbing, not the product.</p>
+    <div class="pair">
+      <div class="who">
+        <div class="tag">For a handler like Kip</div>
+        <h3>The quiet card explains itself</h3>
+        <div class="screen">Meteor Mite · <b>2 pings this week</b> (usually 9)<br>Moved down after 2 missed pings on 14 and 16 Aug. Coming back up: about 3 days.</div>
+        <ul>
+          <li>The coverage card says <em>why</em> it's quiet in plain words, and when that will change. That answers Kip's ask: make it "look less like a coincidence" <span class="src s-wiki">WIKI</span>.</li>
+          <li>When a ping is live, the handler sees it too, with the seconds left. Dot and Ambrose both asked for this <span class="src s-wiki">WIKI</span>, and it's the first slice of the Q4 Handler phone app brief <span class="src s-wiki">WIKI</span>.</li>
+          <li>When a callout moves on, the card says what happened: "No answer in 60 s. Went to The Gale. Counted as missed, not a no."</li>
+        </ul>
+      </div>
+      <div class="who">
+        <div class="tag">For a responder who's gone quiet</div>
+        <h3>A missed ping isn't a no</h3>
+        <div class="screen">That one went to someone closer to ready.<br><b>Missing it doesn't count against you like a no.</b> You're still near the top for Harborside.</div>
+        <ul>
+          <li>The phone says plainly what a miss means, so Vesper isn't left standing in the kitchen with the phone and no idea what it cost him <span class="src s-wiki">WIKI</span>.</li>
+          <li>After a quiet stretch the phone says "You're back in rotation", because the score eased back. This is the "For" side of the 2019 note.</li>
+          <li>If someone keeps missing even when ranked first, the app runs a quiet check ("Tap if you got this") that counts for nothing. The four miss 75% of pings when first; others miss 16% <span class="src s-an">ANALYSIS</span>. We don't yet know if the phones are receiving.</li>
+        </ul>
+      </div>
+    </div>
+    <a class="cta" href="prototype.html">Click through it: handler and responder side by side →</a>
+  </section>
+
+  <section>
+    <h2>The plumbing underneath (for Marcus and Wen, 4.3)</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Change</th><th>What people notice</th></tr></thead>
+      <tbody>
+        <tr><td>Score a miss separately from a turn-down, and smaller</td><td>"Missed isn't a no" is true, not just a message. The glossary already separates them <span class="src s-wiki">WIKI</span>; only the code doesn't <span class="src s-code">CODE</span>.</td></tr>
+        <tr><td>Misses ease back over a few days; turn-downs stay until the next take</td><td>"Back in rotation." Answers both sides of the 2019 note.</td></tr>
+        <tr><td>A floor, so nobody drops out of the order entirely</td><td>The quiet card never has to say "no pings, no end date."</td></tr>
+        <tr><td>One-time reset for the four responders</td><td>Mite, Vesper, Farlight and The Undertow get pings again. Only works if the cause of their misses is fixed first <span class="src s-an">ANALYSIS</span>.</td></tr>
+        <tr><td>Start the 60 s when the phone has the ping, not when we send it (if Wen confirms there's a gap)</td><td>Ambrose's "boot half on" race feels fair again <span class="src s-wiki">WIKI</span>.</td></tr>
+        <tr><td>Alert when a callout goes unfilled (5.5% → 11.1% since 4.2)</td><td>Handlers and support hear about it before the ticket <span class="src s-an">ANALYSIS</span>.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>What this keeps</h2>
+    <ul>
+      <li>The 60-second ping wait and the proximity weighting both stay. This isn't a revert. Wide-area responders asked for the ranking change, and reverting "just trades one angry group of responders for another" <span class="src s-priya">PRIYA</span>.</li>
+      <li>Security Policy 4.1. Handlers see their own responders' place and reasons only, by cover name, never other responders' scores <span class="src s-wiki">WIKI</span>. We still need a check on whether storing scores by cover name is itself allowed <span class="src s-an">ANALYSIS</span>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Open before anyone builds</h2>
+    <ul>
+      <li><strong>Why the four miss even when first.</strong> Slow answers, phones not receiving, or wrong availability. Wen's Q1–2 <span class="src s-an">ANALYSIS</span>.</li>
+      <li><strong>Real numbers.</strong> Ravi's weekly report hasn't been checked against ours <span class="src s-an">ANALYSIS</span>. Priya's "August is always soft" can't be tested; data starts 29 Jun <span class="src s-priya">PRIYA</span> <span class="src s-an">ANALYSIS</span>.</li>
+      <li><strong>Availability Confidence.</strong> Committed to 4.2, not in the release notes <span class="src s-wiki">WIKI</span>. A "how sure are we they're free" signal overlaps with the quiet card. Worth asking whether it's the same idea.</li>
+      <li><strong>Who owns it.</strong> Every roadmap item still lists Priya <span class="src s-wiki">WIKI</span>. The Handler phone app is exploring but not staffed <span class="src s-wiki">WIKI</span>.</li>
+    </ul>
+  </section>
+
+  <hr>
+  <p class="small">What the prototype shows is illustrative: the "usually 9 pings" and "about 3 days" figures are made up for the mock-up, not measured. Shared cover (Q4) <span class="src s-wiki">WIKI</span> would be the natural next step for The Gale's overload, but it isn't part of this.</p>
+</main>
