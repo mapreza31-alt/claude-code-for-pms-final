@@ -23,3 +23,41 @@ You've now read both piles. Where do they disagree? What's loud in the interview
 If I'd only read the interviews, what would I have got wrong?
 
 ### 3.
+
+provide a data visualization to summarize the findings and next steps
+
+### 4.
+
+create a product backlog and in  priority  order
+
+### 5.
+
+based on the interviews conducted, what was the problem with 4.2?
+
+### 6.
+
+provide a visual to understand better the issues raised in the interviews and include where the issues occurred in the process and the possible causes
+
+### 7.
+
+put in the visual in a process diagram
+
+### 8.
+
+Tell me more about the quiet weeks Dot and Kip described
+Tell me more about handlers not being told a callout is live
+Tell me more about callouts vanishing before responders answer
+Tell me more about the console usability issues
+Also include in the diagram what happens before and after the callout process
+
+### 9.
+
+now provide a visual of the issues that a handler vs the responder are facing and what it likely causing it
+
+### 10.
+
+put in a process diagram so I can better understand it
+
+### 11.
+
+is there anything else I missed that is important to note
