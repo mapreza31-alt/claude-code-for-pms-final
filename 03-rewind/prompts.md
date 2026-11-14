@@ -53,3 +53,23 @@ provide a bottom line and next steps to provide to leadership
 ### 10.
 
 is there anything else I might have missed
+
+### 11.
+
+Summarize what the big takeaway is
+
+### 12.
+
+help me find the "why" it changed
+
+### 13.
+
+first provide a visual or process diagram of the pings to help me understand why it was working before and after the 4.2 release.
+
+### 14.
+
+Show me how the acceptance score is calculated in history.py
+
+### 15.
+
+What would a score floor or recovery over time change?
