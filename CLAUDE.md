@@ -164,3 +164,6 @@ On the wiki, comments are signed with roles. This is who each role is:
 - Score arithmetic from history.py: from the 1.0 cap, 9 misses hit the 0 floor and 13 takes in a row are needed to climb back. A full 0.25 rank loss is about 19 extra minutes of travel time.
 - Options weighed: a floor of 0.4 caps the loss at ~11 minutes; drifting back to 0.5 at 0.02/day takes ~25 days from 0. Neither works until the four's 75% miss rate is explained. Suggested order: find the cause (Wen), score misses apart from turn-downs, then add floor or recovery and reset the four (Helen decides).
 - Made an inline before/after ping diagram (90 s vs 60 s wait, healthy vs stuck loop). It assumes a ~70 s answer time and names no responders.
+- Totals vs rows: the acceptance average (77% → 54% → 73%) looks like a recovery, but the per-responder and per-day rows show the jump on 12 Aug exactly, misses coming before the pings fell, and four people still shut out while their work moved to others. Ask for totals first, then a breakdown by person and by day.
+- Counts can hide rates: unfilled callouts barely moved as a count (48 → 49) but doubled as a share, and callouts needing 3+ pings went from 12 to 26 in a period 40% shorter.
+- When The Undertow was pinged after 4.2 he was usually still asked first; what fell was how often he got pinged at all on Harborside callouts.

@@ -73,3 +73,7 @@ Show me how the acceptance score is calculated in history.py
 ### 15.
 
 What would a score floor or recovery over time change?
+
+### 16.
+
+if I'd only asked for the number, not the rows, what would I have missed?
